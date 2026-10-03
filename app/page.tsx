@@ -534,17 +534,16 @@ export default function Home() {
     <main className="app-shell">
       <div className="ambient-grid" aria-hidden="true" />
 
-      <header className="app-header">
-        <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">
-            <Droplets size={24} strokeWidth={2.2} />
-          </span>
-          <div>
-            <p className="eyebrow">THERMAL TOOL · 01</p>
-            <h1>冷板均溫計算器</h1>
-          </div>
+      <header className="tool-hero">
+        <div className="tool-hero-nav">
+          <a className="tool-home-link" href="https://pmebruce.github.io/engineering-toolbox/">← 工程工具箱</a>
+          <button type="button" className="tool-install" onClick={() => alert("iPhone：請點 Safari 的「分享」，再選「加入主畫面」。\nAndroid：請在瀏覽器選單選擇「安裝應用程式」。")}>加入主畫面</button>
         </div>
-        <p className="header-note">單一矩形流道 · 穩態估算</p>
+        <div className="tool-hero-main">
+          <img className="tool-hero-logo" src="./icon-192.png" alt="冷板均溫計算器 Logo" />
+          <div className="tool-hero-copy"><p className="tool-kicker">COLD PLATE / THERMAL DESIGN</p><h1>冷板均溫計算器</h1></div>
+        </div>
+        <p className="tool-hero-description">由熱負載、冷卻液與矩形流道尺寸，快速估算冷板平均溫度。</p>
       </header>
 
       <section className="workspace" aria-label="冷板計算工作區">

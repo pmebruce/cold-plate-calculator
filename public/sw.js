@@ -1,4 +1,4 @@
-const CACHE_NAME = "cold-plate-calculator-v3-type2";
+const CACHE_NAME = "cold-plate-calculator-v3-type2-hero1";
 const BASE = self.registration.scope;
 const APP_SHELL = ["", "manifest.webmanifest", "icon-512.png", "icon-192.png"].map((path) => new URL(path, BASE).href);
 
