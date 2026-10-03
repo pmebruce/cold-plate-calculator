@@ -1,4 +1,4 @@
-const CACHE_NAME = "cold-plate-calculator-v3";
+const CACHE_NAME = "cold-plate-calculator-v3-type1";
 const BASE = self.registration.scope;
 const APP_SHELL = ["", "manifest.webmanifest", "icon-512.png", "icon-192.png"].map((path) => new URL(path, BASE).href);
 
@@ -17,7 +17,7 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
+          keys.filter((key) => key.startsWith('cold-plate-calculator-') && key !== CACHE_NAME).map((key) => caches.delete(key)),
         ),
       )
       .then(() => self.clients.claim()),
