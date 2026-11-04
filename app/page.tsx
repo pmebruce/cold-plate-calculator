@@ -354,11 +354,11 @@ function calculate(inputs: Inputs, fluidKey: FluidKey, imported: ImportedFluid |
   const warnings: string[] = [];
 
   if (
-    properties.clamped ||
+    !imported && (properties.clamped ||
     inletTemp < fluid.range[0] ||
     inletTemp > fluid.range[1] ||
     outletTemp < fluid.range[0] ||
-    outletTemp > fluid.range[1]
+    outletTemp > fluid.range[1])
   ) {
     warnings.push(
       `液體均溫超出 ${fluid.range[0]}～${fluid.range[1]}°C 物性表範圍，已用邊界值估算。`,
@@ -718,7 +718,7 @@ export default function Home() {
                   </span>
                   <span>
                     <strong>出口液溫</strong>
-                    <small>{FLUIDS[fluid].formula}</small>
+                    <small>{imported?.name ?? FLUIDS[fluid].formula}</small>
                   </span>
                 </div>
                 <TemperatureValue value={result.outletTemp} />
@@ -804,7 +804,7 @@ export default function Home() {
         {result.valid ? (
           <>
             <div className="report-status">
-              <span>{FLUIDS[fluid].formula}</span>
+              <span>{imported?.name ?? FLUIDS[fluid].formula}</span>
               <span>{result.regime}</span>
               <span>物性取自 {formatNumber(result.meanFluidTemp, 2)}°C</span>
               <span>數值即時更新</span>
@@ -848,7 +848,7 @@ export default function Home() {
                   substitution={`在物性表中夾住 ${formatNumber(result.meanFluidTemp, 3)}°C 的兩個溫度點間，分別對 ρ、cp、k、μ 做線性內插`}
                 />
                 <div className="property-readout">
-                  <span>在平均液溫線性內插 {FLUIDS[fluid].name} 物性表</span>
+                  <span>{imported ? '固定物性 @ '+imported.temp+' °C' : '在平均液溫線性內插 '+FLUIDS[fluid].name+' 物性表'}</span>
                   <code>ρ = {formatNumber(result.density, 3)} kg/m³</code>
                   <code>cp = {formatNumber(result.specificHeat, 2)} J/(kg·K)</code>
                   <code>k = {formatNumber(result.thermalConductivity, 5)} W/(m·K)</code>
