@@ -230,7 +230,23 @@ function interpolateProperties(fluid: FluidDefinition, temperature: number) {
   };
 }
 
-function calculate(inputs: Inputs, fluidKey: FluidKey): Calculation {
+function incomingFluid() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("fp") !== "1") return null;
+  const kind = params.get("fluid");
+  if (kind !== "Water" && kind !== "MEG" && kind !== "MPG") return null;
+  const keys = ["temp","conc","rho","mu","cp","k"];
+  if (keys.some(key => !params.get(key)?.trim())) return null;
+  const [temp,conc,rho,mu,cp,k] = keys.map(key => Number(params.get(key)));
+  if (![temp,conc,rho,mu,cp,k].every(Number.isFinite) || temp < -50 || temp > 95 ||
+      conc < 0 || conc > 60 || rho <= 0 || rho > 2000 || mu <= 0 || mu > 100 ||
+      cp <= 0 || cp > 10000 || k <= 0 || k > 5) return null;
+  const name = kind === "Water" ? "水" : (kind === "MEG" ? "EG" : "PG") + " " + conc + " wt%";
+  return {name,temp,rho,mu,cp,k};
+}
+type ImportedFluid = NonNullable<ReturnType<typeof incomingFluid>>;
+
+function calculate(inputs: Inputs, fluidKey: FluidKey, imported: ImportedFluid | null): Calculation {
   const outputPower = parseDecimal(inputs.outputPower);
   const efficiency = parseDecimal(inputs.efficiency);
   const inletTemp = parseDecimal(inputs.inletTemp);
@@ -263,7 +279,7 @@ function calculate(inputs: Inputs, fluidKey: FluidKey): Calculation {
   for (let iteration = 0; iteration < 20; iteration += 1) {
     iterations = iteration + 1;
     const meanFluidTemp = (inletTemp + outletTemp) / 2;
-    const properties = interpolateProperties(fluid, meanFluidTemp);
+    const properties = imported ? { ...imported, clamped: false } : interpolateProperties(fluid, meanFluidTemp);
     const massFlow = volumeFlow * properties.rho;
     const nextOutlet = inletTemp + heatLoss / (massFlow * properties.cp);
     if (Math.abs(nextOutlet - outletTemp) < 0.0001) {
@@ -274,7 +290,7 @@ function calculate(inputs: Inputs, fluidKey: FluidKey): Calculation {
   }
 
   const meanFluidTemp = (inletTemp + outletTemp) / 2;
-  const properties = interpolateProperties(fluid, meanFluidTemp);
+  const properties = imported ? { ...imported, clamped: false } : interpolateProperties(fluid, meanFluidTemp);
   const length = channelLength / 1000;
   const width = channelWidth / 1000;
   const height = channelHeight / 1000;
@@ -507,9 +523,11 @@ function TemperatureValue({ value }: { value: number }) {
 export default function Home() {
   const [fluid, setFluid] = useState<FluidKey>("water");
   const [inputs, setInputs] = useState<Inputs>(DEFAULT_INPUTS);
-  const result = useMemo(() => calculate(inputs, fluid), [inputs, fluid]);
+  const [imported, setImported] = useState<ImportedFluid | null>(null);
+  const result = useMemo(() => calculate(inputs, fluid, imported), [inputs, fluid, imported]);
 
   useEffect(() => {
+    setImported(incomingFluid());
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/sw.js`).catch(() => undefined);
     }
@@ -556,7 +574,9 @@ export default function Home() {
             <Droplets size={20} aria-hidden="true" />
           </div>
 
+          {imported && <p role="status">已帶入流體物性查詢：{imported.name} @ {imported.temp} °C。計算採固定 ρ、μ、cₚ、k。入口液溫請另外設定。 <button type="button" onClick={() => setImported(null)}>改用內建物性</button></p>}
           <RadioGroup
+            disabled={Boolean(imported)}
             value={fluid}
             onValueChange={(value) => setFluid(value as FluidKey)}
             className="fluid-grid"
@@ -1051,6 +1071,7 @@ export default function Home() {
         </span>
         <span>iPhone：Safari 分享 → 加入主畫面</span>
       </footer>
+    <p style={{ textAlign: "center" }}>冷板均溫 · 版本 2026-11-04.1</p>
     </main>
   );
 }
